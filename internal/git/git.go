@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Client struct {
@@ -135,6 +136,60 @@ func GetBranchCommitUnixTime(branch string) (int64, error) {
 		return 0, err
 	}
 	return v, nil
+}
+
+// ParseDurationLike parses durations with optional suffixes: s,m,h,d,w
+// examples: 30d, 72h, 1w, 15m
+func ParseDurationLike(s string) (time.Duration, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, errors.New("empty duration")
+	}
+
+	// suffixes: w (week = 7d), d (day), h, m, s
+	last := s[len(s)-1]
+	if last == 'w' || last == 'd' || last == 'h' || last == 'm' || last == 's' {
+		unit := string(last)
+		num := s[:len(s)-1]
+		// parse number as integer
+		v, err := strconv.ParseInt(num, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		switch unit {
+		case "w":
+			return time.Duration(v) * 7 * 24 * time.Hour, nil
+		case "d":
+			return time.Duration(v) * 24 * time.Hour, nil
+		case "h":
+			return time.Duration(v) * time.Hour, nil
+		case "m":
+			return time.Duration(v) * time.Minute, nil
+		case "s":
+			return time.Duration(v) * time.Second, nil
+		}
+	}
+
+	// fallback to time.ParseDuration for inputs like 72h30m
+	return time.ParseDuration(s)
+}
+
+// FilterBranchesOlderThan returns branches whose latest commit time is before the threshold
+func FilterBranchesOlderThan(branches []string, threshold time.Time) ([]string, error) {
+	out := []string{}
+	for _, b := range branches {
+		tsecs, err := GetBranchCommitUnixTime(b)
+		if err != nil {
+			// treat error as branch being old
+			out = append(out, b)
+			continue
+		}
+		t := time.Unix(tsecs, 0)
+		if t.Before(threshold) {
+			out = append(out, b)
+		}
+	}
+	return out, nil
 }
 
 // ParseBranchesFromString splits git output into branches (helper used by tests)

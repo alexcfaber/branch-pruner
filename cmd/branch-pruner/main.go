@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/alexcfaber/branch-pruner/internal/git"
 )
@@ -14,6 +15,7 @@ func main() {
 	remote := flag.String("remote", "origin", "Remote name to prune branches from")
 	keep := flag.Int("keep", 5, "Number of most recent branches to keep (based on commit timestamp)")
 	prefix := flag.String("prefix", "", "Only consider branches with this prefix")
+	olderThan := flag.String("older-than", "", "Only consider branches with latest commit older than this duration (e.g. 30d, 72h)")
 	yes := flag.Bool("yes", false, "Assume yes for all deletions (non-interactive)")
 	interactive := flag.Bool("interactive", false, "Prompt before deleting each branch")
 	confirm := flag.Bool("confirm", false, "Prompt once to confirm all deletions")
@@ -40,6 +42,23 @@ func main() {
 			}
 		}
 		branches = filtered
+	}
+
+	// filter by older-than if provided
+	if *olderThan != "" {
+		d, err := git.ParseDurationLike(*olderThan)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "invalid older-than: %v\n", err)
+			os.Exit(1)
+		}
+		threshold := time.Now().Add(-d)
+		older, err := git.FilterBranchesOlderThan(branches, threshold)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error filtering by age: %v\n", err)
+			os.Exit(1)
+		}
+		// use only older branches from now on
+		branches = older
 	}
 
 	toDelete := git.SelectBranchesToDelete(branches, *keep)
