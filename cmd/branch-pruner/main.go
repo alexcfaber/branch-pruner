@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alexcfaber/branch-pruner/internal/git"
 	"github.com/alexcfaber/branch-pruner/internal/config"
+	"github.com/alexcfaber/branch-pruner/internal/git"
 )
 
 func main() {
