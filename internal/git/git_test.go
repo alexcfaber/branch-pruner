@@ -4,9 +4,21 @@ import "testing"
 
 func TestSelectBranchesToDelete(t *testing.T) {
     branches := []string{"a", "b", "c", "d", "e"}
-    toDel := SelectBranchesToDelete(branches, 2)
+    // provide timestamps so that 'e' and 'd' are newest
+    ts := map[string]int64{
+        "a": 10,
+        "b": 20,
+        "c": 30,
+        "d": 40,
+        "e": 50,
+    }
+    toDel := SelectBranchesToDeleteByTimestamps(branches, ts, 2)
     if len(toDel) != 3 {
         t.Fatalf("expected 3, got %d", len(toDel))
+    }
+    // oldest three should be a,b,c in that order
+    if toDel[0] != "a" || toDel[1] != "b" || toDel[2] != "c" {
+        t.Fatalf("unexpected deletion list: %v", toDel)
     }
 }
 

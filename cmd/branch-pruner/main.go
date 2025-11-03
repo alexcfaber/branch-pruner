@@ -12,9 +12,13 @@ import (
 func main() {
     dryRun := flag.Bool("dry-run", true, "Show branches that would be deleted but don't delete them")
     remote := flag.String("remote", "origin", "Remote name to prune branches from")
-    keep := flag.Int("keep", 5, "Number of most recent branches to keep per author")
+    keep := flag.Int("keep", 5, "Number of most recent branches to keep (based on commit timestamp)")
     prefix := flag.String("prefix", "", "Only consider branches with this prefix")
     flag.Parse()
+
+    fmt.Println("branch-pruner — prune old git branches by commit date")
+    fmt.Println("Selection heuristic: branches are ranked by the timestamp of their latest commit; the newest 'keep' branches are preserved and older branches are selected for deletion.")
+    fmt.Println()
 
     g := git.NewClient(*remote)
 
