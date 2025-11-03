@@ -36,3 +36,19 @@ Examples
 # Only consider branches with prefix `feature/`
 ./branch-pruner -dry-run -prefix=feature/
 
+Safety flags
+------------
+
+- `-dry-run` (default true): show branches that would be deleted but do not delete them.
+- `-yes`: assume yes to all deletions; useful for scripting non-interactive runs. When set, branches shown will be deleted without prompting.
+- `-interactive`: prompt before deleting each branch. Useful as an extra safety layer when running without `-dry-run`.
+
+Examples:
+
+# Interactive per-branch confirmation
+./branch-pruner -dry-run=false -interactive
+
+# Non-interactive destructive run (use with caution)
+./branch-pruner -dry-run=false -yes
+
+

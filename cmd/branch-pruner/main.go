@@ -14,6 +14,8 @@ func main() {
     remote := flag.String("remote", "origin", "Remote name to prune branches from")
     keep := flag.Int("keep", 5, "Number of most recent branches to keep (based on commit timestamp)")
     prefix := flag.String("prefix", "", "Only consider branches with this prefix")
+    yes := flag.Bool("yes", false, "Assume yes for all deletions (non-interactive)")
+    interactive := flag.Bool("interactive", false, "Prompt before deleting each branch")
     flag.Parse()
 
     fmt.Println("branch-pruner — prune old git branches by commit date")
@@ -57,6 +59,30 @@ func main() {
     }
 
     for _, b := range toDelete {
+        // decide whether to delete based on flags
+        doDelete := true
+        if *yes {
+            doDelete = true
+        } else if *interactive {
+            // prompt
+            fmt.Printf("Delete branch %s? [y/N]: ", b)
+            var resp string
+            if _, err := fmt.Scanln(&resp); err != nil {
+                // treat as no
+                doDelete = false
+            } else {
+                resp = strings.TrimSpace(strings.ToLower(resp))
+                doDelete = (resp == "y" || resp == "yes")
+            }
+        } else if *dryRun {
+            doDelete = false
+        }
+
+        if !doDelete {
+            fmt.Printf("skipped %s\n", b)
+            continue
+        }
+
         if err := g.DeleteBranch(b); err != nil {
             fmt.Fprintf(os.Stderr, "failed to delete %s: %v\n", b, err)
         } else {
