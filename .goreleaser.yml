@@ -1,0 +1,35 @@
+project_name: branch-pruner
+
+builds:
+  - id: branch-pruner
+    main: ./cmd/branch-pruner
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    binary: branch-pruner
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - format: tar.gz
+    wrap_in_directory: true
+    replacements:
+      darwin: macOS
+      amd64: x86_64
+
+changelog:
+  sort: desc
+
+snapshot:
+  name_template: "{{ .Tag }}-snapshot"
+
+release:
+  github:
+    owner: alexcfaber
+    name: branch-pruner
+    # If you want goreleaser to publish releases automatically, set GITHUB_TOKEN in Actions secrets.
+    # Without GITHUB_TOKEN goreleaser will still create artifacts locally when run.
