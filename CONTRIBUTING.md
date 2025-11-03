@@ -28,6 +28,7 @@ Guidelines
 - Update `README.md` where relevant.
 - Follow Go formatting (`gofmt`) and idiomatic patterns.
 
+
 CI
 
 This repository has a GitHub Actions workflow that runs `go test ./...` on push and pull requests.

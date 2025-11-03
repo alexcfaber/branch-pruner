@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/alexcfaber/branch-pruner/internal/git"
+	"github.com/alexcfaber/branch-pruner/internal/config"
 )
 
 func main() {
@@ -16,10 +17,16 @@ func main() {
 	keep := flag.Int("keep", 5, "Number of most recent branches to keep (based on commit timestamp)")
 	prefix := flag.String("prefix", "", "Only consider branches with this prefix")
 	olderThan := flag.String("older-than", "", "Only consider branches with latest commit older than this duration (e.g. 30d, 72h)")
+	configPath := flag.String("config", "", "Path to YAML config file (defaults: ~/.branch-pruner.yaml, ./.branch-pruner.yaml)")
 	yes := flag.Bool("yes", false, "Assume yes for all deletions (non-interactive)")
 	interactive := flag.Bool("interactive", false, "Prompt before deleting each branch")
 	confirm := flag.Bool("confirm", false, "Prompt once to confirm all deletions")
 	flag.Parse()
+
+	if err := mergeWithConfig(prefix, remote, keep, olderThan, *configPath); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
+		os.Exit(1)
+	}
 
 	fmt.Println("branch-pruner — prune old git branches by commit date")
 	fmt.Println("Selection heuristic: branches are ranked by the timestamp of their latest commit; the newest 'keep' branches are preserved and older branches are selected for deletion.")
@@ -131,4 +138,26 @@ func main() {
 			fmt.Printf("deleted %s\n", b)
 		}
 	}
+}
+
+// mergeWithConfig loads config (if present) and merges into provided flag pointers
+// It prefers existing flag values unless they are empty/defaults.
+func mergeWithConfig(prefix *string, remote *string, keep *int, olderThan *string, configPath string) error {
+	cfg, err := config.LoadConfig(configPath)
+	if err != nil {
+		return err
+	}
+	if *prefix == "" && cfg.Prefix != "" {
+		*prefix = cfg.Prefix
+	}
+	if *remote == "origin" && cfg.Remote != "" {
+		*remote = cfg.Remote
+	}
+	if *keep == 5 && cfg.Keep != 0 {
+		*keep = cfg.Keep
+	}
+	if *olderThan == "" && cfg.OlderThan != "" {
+		*olderThan = cfg.OlderThan
+	}
+	return nil
 }
