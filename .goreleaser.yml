@@ -8,7 +8,7 @@ builds:
     goarch: [amd64, arm64]
     binary: branch-pruner
     env:
-      CGO_ENABLED: "0"
+      - CGO_ENABLED=0
 
 # Use default archives behavior; goreleaser will create compressed archives per build.
 archives:
