@@ -11,6 +11,16 @@ Getting started
 go test ./...
 ```
 
+Linting
+
+We use `golangci-lint` for linting. To run locally:
+
+```bash
+golangci-lint run
+```
+
+Configuration is in `.golangci.yml`.
+
 Guidelines
 
 - Keep changes small and well-scoped.
