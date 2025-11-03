@@ -43,6 +43,8 @@ Safety flags
 - `-yes`: assume yes to all deletions; useful for scripting non-interactive runs. When set, branches shown will be deleted without prompting.
 - `-interactive`: prompt before deleting each branch. Useful as an extra safety layer when running without `-dry-run`.
 
+- `-confirm`: prompt once to confirm all deletions before they run. Useful when you want a single confirmation rather than per-branch prompts.
+
 Examples:
 
 # Interactive per-branch confirmation
@@ -50,5 +52,8 @@ Examples:
 
 # Non-interactive destructive run (use with caution)
 ./branch-pruner -dry-run=false -yes
+
+# Bulk confirm once for all deletions
+./branch-pruner -dry-run=false -confirm
 
 

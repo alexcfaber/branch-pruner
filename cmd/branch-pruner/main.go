@@ -16,6 +16,7 @@ func main() {
     prefix := flag.String("prefix", "", "Only consider branches with this prefix")
     yes := flag.Bool("yes", false, "Assume yes for all deletions (non-interactive)")
     interactive := flag.Bool("interactive", false, "Prompt before deleting each branch")
+    confirm := flag.Bool("confirm", false, "Prompt once to confirm all deletions")
     flag.Parse()
 
     fmt.Println("branch-pruner — prune old git branches by commit date")
@@ -58,24 +59,46 @@ func main() {
         return
     }
 
+    // bulk confirmation (single prompt)
+    bulkConfirmed := false
+    if *yes {
+        bulkConfirmed = true
+    } else if *confirm {
+        fmt.Printf("About to delete %d branches. Continue? [y/N]: ", len(toDelete))
+        var resp string
+        if _, err := fmt.Scanln(&resp); err != nil {
+            bulkConfirmed = false
+        } else {
+            resp = strings.TrimSpace(strings.ToLower(resp))
+            bulkConfirmed = (resp == "y" || resp == "yes")
+        }
+    }
+
     for _, b := range toDelete {
         // decide whether to delete based on flags
         doDelete := true
+
+        if *dryRun {
+            doDelete = false
+        }
+
         if *yes {
             doDelete = true
+        } else if *confirm {
+            // if confirm was requested but not accepted, skip
+            if !bulkConfirmed {
+                doDelete = false
+            }
         } else if *interactive {
-            // prompt
+            // per-branch prompt
             fmt.Printf("Delete branch %s? [y/N]: ", b)
             var resp string
             if _, err := fmt.Scanln(&resp); err != nil {
-                // treat as no
                 doDelete = false
             } else {
                 resp = strings.TrimSpace(strings.ToLower(resp))
                 doDelete = (resp == "y" || resp == "yes")
             }
-        } else if *dryRun {
-            doDelete = false
         }
 
         if !doDelete {
